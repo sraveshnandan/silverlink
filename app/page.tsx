@@ -1,7 +1,28 @@
-import { UserButton } from "@clerk/nextjs";
+"use client";
+import { api } from "@/convex/_generated/api";
+import { UserProfile } from "@clerk/clerk-react";
+import { useUser } from "@clerk/nextjs";
+import { useConvexAuth, useMutation } from "convex/react";
 import Image from "next/image";
+import { useEffect } from "react";
 
 export default function Home() {
+  const { isLoading, isAuthenticated } = useConvexAuth();
+
+  const { user } = useUser();
+
+  const storeUser = useMutation(api.users.store);
+
+  const create_user = async () => {
+    await storeUser();
+  };
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && user?.id) {
+      create_user();
+    }
+    return () => {};
+  }, [isLoading, isAuthenticated, user?.id]);
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <Image
@@ -12,7 +33,6 @@ export default function Home() {
         height={37}
         priority
       />
-      <UserButton />
     </main>
   );
 }
