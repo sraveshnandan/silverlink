@@ -6,6 +6,13 @@ import { useConvexAuth, useMutation } from "convex/react";
 import Image from "next/image";
 import { useEffect } from "react";
 
+/**
+ * Home page component that renders the main layout and ensures the authenticated user is stored in the backend.
+ *
+ * When authentication finishes and a current user ID is available, this component triggers creation/upsert of the user record.
+ *
+ * @returns The React element for the home page.
+ */
 export default function Home() {
   const { isLoading, isAuthenticated } = useConvexAuth();
 
