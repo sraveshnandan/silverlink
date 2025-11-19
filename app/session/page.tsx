@@ -1,57 +1,57 @@
 "use client";
+import { useUser } from "@clerk/nextjs";
+import { useSearchParams } from "next/navigation";
 import { ZegoUIKitPrebuilt } from "@zegocloud/zego-uikit-prebuilt";
-import { randomID } from "@/utils";
+import { useEffect, useRef } from "react";
 
-export function getUrlParams(
-  url: string = window.location.href
-): URLSearchParams {
-  let urlStr = url.split("?")[1];
-  return new URLSearchParams(urlStr);
-}
+const SessionPage = () => {
+  const { user } = useUser();
+  const searchParams = useSearchParams();
+  const roomID = searchParams.get("roomID") || "default-room";
+  const containerRef = useRef<HTMLDivElement>(null);
 
-export default function App() {
-  const roomID = getUrlParams().get("roomID") || randomID(5);
-  let myMeeting = async (element: HTMLDivElement) => {
-    const userID = randomID(5);
-    const userName = randomID(5);
-    const res = {
-      token: randomID(12),
-    };
-    // generate token
-    const token = ZegoUIKitPrebuilt.generateKitTokenForProduction(
-      1484647939,
-      res.token,
+  useEffect(() => {
+    if (!user || !containerRef.current) return;
+
+    const appID = parseInt(process.env.NEXT_PUBLIC_ZEGOCLOUD_APP_ID!);
+    const serverSecret = process.env.NEXT_PUBLIC_ZEGOCLOUD_APP_SECRET!;
+
+    const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
+      appID,
+      serverSecret,
       roomID,
-      userID,
-      userName
+      user.id,
+      "User"
     );
-    // create instance object from token
-    const zp = ZegoUIKitPrebuilt.create(token);
 
-    // start the call
+    const zp = ZegoUIKitPrebuilt.create(kitToken);
+
     zp.joinRoom({
-      container: element,
-      sharedLinks: [
-        {
-          name: "Personal link",
-          url:
-            window.location.origin +
-            window.location.pathname +
-            "?roomID=" +
-            roomID,
-        },
-      ],
+      container: containerRef.current,
       scenario: {
         mode: ZegoUIKitPrebuilt.VideoConference,
       },
+      showScreenSharingButton: true,
+      showPreJoinView: true,
+      turnOnCameraWhenJoining: false,
+      turnOnMicrophoneWhenJoining: false,
+      showRoomTimer: true,
     });
-  };
+  }, [user, roomID]);
+
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   return (
-    <div
-      className="myCallContainer"
-      ref={myMeeting as any}
-      style={{ width: "100vw", height: "100vh" }}
-    ></div>
+    <div className="w-full h-screen">
+      <div ref={containerRef} className="w-full h-full" />
+    </div>
   );
-}
+};
+
+export default SessionPage;
